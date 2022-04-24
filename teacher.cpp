@@ -7,10 +7,14 @@
 #include <QString>
 #include <QDebug>
 #include <QKeyEvent>
+#include <chrono>
+#include <sys/time.h>
+#include <fstream>
 
 
 
 using namespace std;
+
 
 class StringShow{
 private:
@@ -18,17 +22,19 @@ private:
     string const letters[26] = {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p",
                           "a", "s", "d", "f", "g", "h", "j", "k", "l", "z",
                           "x", "c", "v", "b", "n", "m"};
-    float *t_ind;
+    long *t_ind;
     int max_len;
     int flag;
+    bool f_t;
 
 public:
     StringShow(string str2="start", int max_l=10){
         str = str2;
-        t_ind = new float[max_l-1];
+        t_ind = new long[max_l-1];
         max_len = max_l;
-        for (int i = 0; max_l>i; i++) t_ind[i] = 1.15;
+//        for (int i = 0; max_l>i; i++) t_ind[i] = 1.15;
         flag = 0;
+        f_t = false;
     }
 
     void gen(){
@@ -60,6 +66,36 @@ public:
         flag--;
         if (flag == max_len) flag = max_len-1;
     }
+
+    void add_to_t(){
+
+        struct timeval time_now{};
+        gettimeofday(&time_now, nullptr);
+        time_t msecs_time = (time_now.tv_sec) * 1000 + (time_now.tv_usec / 1000);
+
+        if (f_t){
+//            f_t = false;
+            t_ind[flag-1] -= msecs_time;
+            t_ind[flag] = msecs_time;
+//            qDebug()<<t_ind[flag-1]<<" "<< msecs_time;
+        }
+        else {
+            t_ind[flag] = msecs_time;
+            f_t = true;
+        }
+
+    }
+
+    void write_to_file(){
+        ofstream out_file;
+        out_file.open("t_v.txt", ios::app); // окрываем файл для записи
+
+        if (out_file.is_open())
+        {
+            for (int i=0; i<max_len; i++) out_file << t_ind[i]<<"\n";
+        }
+        out_file.close();
+    }
 };
 
 
@@ -90,6 +126,8 @@ void Teacher::keyPressEvent(QKeyEvent *e){
     if (flag_key_catch){
 //        qDebug()<<letter<<" "<<str.get_int_present();
         if (str.get() == str.get_str_present()){
+            str.add_to_t();
+            str.write_to_file();
             str.gen();
             ui->ShowLabel->setText(QString::fromStdString(str.get()));
             ui->ShowLabel->setStyleSheet("font-size: 22pt");
@@ -101,6 +139,7 @@ void Teacher::keyPressEvent(QKeyEvent *e){
             if (letter == str.get_int_present()-32){
                 ui->InputLabel->setText(QString::fromStdString(str.get_str_present()));
                 ui->InputLabel->setStyleSheet("background-color: green; font-size: 22pt");
+                str.add_to_t();
                 str.move_flag_up();
 
             }

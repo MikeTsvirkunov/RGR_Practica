@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include <QMessageBox>
 #include "teacher.h"
+#include "graphic.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -27,5 +28,13 @@ void MainWindow::on_StartButton_clicked()
     hide();
     Teacher *info_w = new Teacher(this);
     info_w->show();
+}
+
+
+void MainWindow::on_pushButton_clicked()
+{
+    hide();
+    Graphic *graph_win = new Graphic(this);
+    graph_win->show();
 }
 
